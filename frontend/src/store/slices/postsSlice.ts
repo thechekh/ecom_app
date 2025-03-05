@@ -22,9 +22,10 @@ const initialState: PostsState = {
 
 export const fetchPosts = createAsyncThunk(
     'posts/fetchPosts',
-    async ({ page, search }: { page: number; search?: string }) => {
-        const response = await postsAPI.getPosts(page, search);
-        return response.data;
+    async ({ page, search, sort = '-created_at', appendItems = false }:
+        { page: number; search?: string; sort?: string; appendItems?: boolean }) => {
+        const response = await postsAPI.getPosts(page, search, sort);
+        return { ...response.data, appendItems };
     }
 );
 
@@ -80,7 +81,11 @@ const postsSlice = createSlice({
             })
             .addCase(fetchPosts.fulfilled, (state, action) => {
                 state.loading = false;
-                state.items = action.payload.results;
+                if (action.payload.appendItems) {
+                    state.items = [...state.items, ...action.payload.results];
+                } else {
+                    state.items = action.payload.results;
+                }
                 state.totalCount = action.payload.count;
             })
             .addCase(fetchPosts.rejected, (state, action) => {

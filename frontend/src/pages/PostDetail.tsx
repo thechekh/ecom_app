@@ -6,21 +6,16 @@ import {
     Typography,
     Box,
     Button,
-    Paper,
-    Avatar,
     IconButton,
     CircularProgress,
-    Menu,
-    MenuItem,
+    AppBar,
+    Toolbar,
 } from '@mui/material';
 import {
-    ShoppingCart as CartIcon,
-    MoreVert as MoreVertIcon,
-    NavigateBefore,
-    NavigateNext,
+    ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { fetchPost, deletePost, clearSelectedPost } from '../store/slices/postsSlice';
+import { fetchPost, clearSelectedPost } from '../store/slices/postsSlice';
 import { addToCart } from '../store/slices/cartSlice';
 
 const PostDetail = () => {
@@ -28,9 +23,6 @@ const PostDetail = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const { selectedPost: post, loading, error } = useAppSelector(state => state.posts);
-    const { user } = useAppSelector(state => state.auth);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [addingToCart, setAddingToCart] = useState(false);
 
     useEffect(() => {
@@ -50,42 +42,13 @@ const PostDetail = () => {
         );
     }
 
-    if (error) {
+    if (error || !post) {
         return (
             <Typography color="error" align="center" sx={{ mt: 4 }}>
-                {error}
+                {error || 'Post not found'}
             </Typography>
         );
     }
-
-    if (!post) {
-        return (
-            <Typography align="center" sx={{ mt: 4 }}>
-                Post not found
-            </Typography>
-        );
-    }
-
-    const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-    };
-
-    const handleEdit = () => {
-        handleMenuClose();
-        navigate(`/posts/${post.id}/edit`);
-    };
-
-    const handleDelete = async () => {
-        handleMenuClose();
-        if (window.confirm('Are you sure you want to delete this post?')) {
-            await dispatch(deletePost(post.id));
-            navigate('/');
-        }
-    };
 
     const handleAddToCart = async () => {
         setAddingToCart(true);
@@ -96,133 +59,124 @@ const PostDetail = () => {
         }
     };
 
-    const handlePrevImage = () => {
-        setCurrentImageIndex(prev =>
-            prev > 0 ? prev - 1 : post.images.length - 1
-        );
-    };
-
-    const handleNextImage = () => {
-        setCurrentImageIndex(prev =>
-            prev < post.images.length - 1 ? prev + 1 : 0
-        );
+    const handleBack = () => {
+        navigate(-1);
     };
 
     return (
-        <Container maxWidth="lg">
-            <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
-                <Grid container spacing={4}>
-                    <Grid item xs={12} md={8}>
-                        {post.images.length > 0 && (
-                            <Box sx={{ position: 'relative' }}>
+        <Box sx={{ bgcolor: '#ffffff', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <AppBar
+                position="sticky"
+                color="transparent"
+                elevation={0}
+                sx={{
+                    borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+                    bgcolor: '#ffffff'
+                }}
+            >
+                <Toolbar sx={{ minHeight: '44px!important' }}>
+                    <IconButton
+                        edge="start"
+                        onClick={handleBack}
+                        sx={{ color: '#000000' }}
+                    >
+                        <ArrowBackIcon />
+                    </IconButton>
+                </Toolbar>
+            </AppBar>
+
+            <Container
+                maxWidth="xs"
+                sx={{
+                    p: 0,
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}
+            >
+                <Box sx={{ width: '100%', maxWidth: 300 }}>
+                    <Grid
+                        container
+                        spacing={0.5}
+                        justifyContent="center"
+                        alignItems="center"
+                        sx={{
+                            mb: 2,
+                            width: '100%',
+                            margin: '0 auto'
+                        }}
+                    >
+                        {post.images.map((image, index) => (
+                            <Grid
+                                item
+                                xs={4}
+                                key={index}
+                                sx={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center'
+                                }}
+                            >
                                 <Box
                                     component="img"
-                                    src={post.images[currentImageIndex].image}
-                                    alt={post.caption}
+                                    src={image.image}
+                                    alt={`Product ${index + 1}`}
                                     sx={{
                                         width: '100%',
-                                        height: 500,
+                                        aspectRatio: '1',
                                         objectFit: 'cover',
-                                        borderRadius: 1,
                                     }}
                                 />
-                                {post.images.length > 1 && (
-                                    <>
-                                        <IconButton
-                                            sx={{
-                                                position: 'absolute',
-                                                left: 8,
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                bgcolor: 'rgba(255, 255, 255, 0.8)',
-                                                '&:hover': {
-                                                    bgcolor: 'rgba(255, 255, 255, 0.9)',
-                                                },
-                                            }}
-                                            onClick={handlePrevImage}
-                                        >
-                                            <NavigateBefore />
-                                        </IconButton>
-                                        <IconButton
-                                            sx={{
-                                                position: 'absolute',
-                                                right: 8,
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                bgcolor: 'rgba(255, 255, 255, 0.8)',
-                                                '&:hover': {
-                                                    bgcolor: 'rgba(255, 255, 255, 0.9)',
-                                                },
-                                            }}
-                                            onClick={handleNextImage}
-                                        >
-                                            <NavigateNext />
-                                        </IconButton>
-                                    </>
-                                )}
-                            </Box>
-                        )}
+                            </Grid>
+                        ))}
                     </Grid>
-                    <Grid item xs={12} md={4}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Avatar
-                                src={post.user.profile_photo}
-                                alt={post.user.username}
-                                sx={{ mr: 2 }}
-                            >
-                                {post.user.username[0].toUpperCase()}
-                            </Avatar>
-                            <Typography variant="subtitle1">
-                                {post.user.username}
-                            </Typography>
-                            {user?.id === post.user.id && (
-                                <>
-                                    <IconButton
-                                        sx={{ ml: 'auto' }}
-                                        onClick={handleMenuClick}
-                                    >
-                                        <MoreVertIcon />
-                                    </IconButton>
-                                    <Menu
-                                        anchorEl={anchorEl}
-                                        open={Boolean(anchorEl)}
-                                        onClose={handleMenuClose}
-                                    >
-                                        <MenuItem onClick={handleEdit}>Edit</MenuItem>
-                                        <MenuItem onClick={handleDelete}>Delete</MenuItem>
-                                    </Menu>
-                                </>
-                            )}
-                        </Box>
 
-                        <Typography variant="body1" paragraph>
+                    <Box sx={{ px: 2, py: 2 }}>
+                        <Typography variant="h6" sx={{ fontSize: '16px', fontWeight: 400, textAlign: 'center' }}>
                             {post.caption}
                         </Typography>
 
-                        <Typography variant="h5" color="primary" gutterBottom>
+                        <Typography variant="h6" sx={{ fontSize: '16px', fontWeight: 600, textAlign: 'center', mt: 1 }}>
                             ${Number(post.price).toFixed(2)}
                         </Typography>
 
-                        <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                            Posted on {new Date(post.created_at).toLocaleDateString()}
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                fontSize: '12px',
+                                color: 'text.secondary',
+                                mt: 1,
+                                textAlign: 'center'
+                            }}
+                        >
+                            {post.user.username}
                         </Typography>
 
-                        {user?.id !== post.user.id && (
-                            <Button
-                                variant="contained"
-                                startIcon={<CartIcon />}
-                                fullWidth
-                                onClick={handleAddToCart}
-                                disabled={addingToCart}
-                                sx={{ mt: 2 }}
-                            >
-                                {addingToCart ? 'Adding...' : 'Add to Cart'}
-                            </Button>
-                        )}
-                    </Grid>
-                </Grid>
-            </Paper>
-        </Container>
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            onClick={handleAddToCart}
+                            disabled={addingToCart}
+                            sx={{
+                                mt: 2,
+                                textTransform: 'none',
+                                py: 1,
+                                bgcolor: '#0095f6',
+                                '&:hover': {
+                                    bgcolor: '#1877f2'
+                                },
+                                fontSize: '14px',
+                                fontWeight: 600
+                            }}
+                        >
+                            {addingToCart ? 'Adding...' : 'Add to Cart'}
+                        </Button>
+                    </Box>
+                </Box>
+            </Container>
+        </Box>
     );
 };
 

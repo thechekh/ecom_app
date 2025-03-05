@@ -59,8 +59,8 @@ export const authAPI = {
 
 // Posts API
 export const postsAPI = {
-    getPosts: (page = 1, search = '') =>
-        api.get<{ count: number; results: Post[] }>('/posts/', { params: { page, search } }),
+    getPosts: (page = 1, search = '', sort = '-created_at') =>
+        api.get<{ count: number; results: Post[] }>('/posts/', { params: { page, search, sort } }),
     getPost: (id: number) => api.get<Post>(`/posts/${id}/`),
     createPost: (data: FormData) => api.post<Post>('/posts/create/', data),
     updatePost: (id: number, data: FormData) => api.put<Post>(`/posts/${id}/edit/`, data),
@@ -84,8 +84,26 @@ export const cartAPI = {
 export const ordersAPI = {
     getOrders: () => api.get<{ count: number; results: Order[] }>('/orders/'),
     getOrder: (id: number) => api.get<Order>(`/orders/${id}/`),
-    createOrder: (data: { payment_method: string; shipping_address: string }) =>
-        api.post<Order>('/orders/create/', data),
+    createOrder: async (data: {
+        payment_method: string;
+        shipping_address: string;
+        contact_info: {
+            first_name: string;
+            last_name: string;
+            email: string;
+            phone: string;
+        }
+    }) => {
+        try {
+            console.log('Creating order with data:', data);
+            const response = await api.post<Order>('/orders/create/', data);
+            console.log('Order creation response:', response.data);
+            return response;
+        } catch (error: any) {
+            console.error('API Error:', error.response?.data || error.message);
+            throw error;
+        }
+    },
     cancelOrder: (id: number) => api.put<Order>(`/orders/${id}/cancel/`),
 };
 

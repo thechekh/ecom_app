@@ -8,7 +8,7 @@ class CustomUserAdmin(UserAdmin):
     readonly_fields = ('date_joined', 'last_login')
 
     fieldsets = UserAdmin.fieldsets + (
-        ('Profile', {'fields': ('profile_photo', 'bio')}),
+        ('Profile', {'fields': ('profile_photo', 'bio', 'phone', 'delivery_address')}),
     )
 
 admin.site.register(CustomUser, CustomUserAdmin)

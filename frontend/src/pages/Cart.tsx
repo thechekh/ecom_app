@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Container,
@@ -11,19 +11,15 @@ import {
     CardContent,
     IconButton,
     Button,
-    TextField,
     CircularProgress,
     Divider,
 } from '@mui/material';
 import {
-    Add as AddIcon,
-    Remove as RemoveIcon,
     Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
     fetchCart,
-    updateCartItem,
     removeFromCart,
 } from '../store/slices/cartSlice';
 import FormError from '../components/FormError';
@@ -32,20 +28,21 @@ const Cart = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const { cart, loading, error } = useAppSelector(state => state.cart);
+    const [updatingItems, setUpdatingItems] = useState<{ [key: number]: boolean }>({});
 
     useEffect(() => {
         dispatch(fetchCart());
     }, [dispatch]);
 
-    const handleQuantityChange = async (itemId: number, newQuantity: number) => {
-        if (newQuantity > 0) {
-            await dispatch(updateCartItem({ itemId, quantity: newQuantity }));
-        }
-    };
-
     const handleRemoveItem = async (itemId: number) => {
         if (window.confirm('Are you sure you want to remove this item from your cart?')) {
-            await dispatch(removeFromCart(itemId));
+            setUpdatingItems(prev => ({ ...prev, [itemId]: true }));
+            try {
+                await dispatch(removeFromCart(itemId)).unwrap();
+                await dispatch(fetchCart());
+            } finally {
+                setUpdatingItems(prev => ({ ...prev, [itemId]: false }));
+            }
         }
     };
 
@@ -99,7 +96,25 @@ const Cart = () => {
             <Grid container spacing={3}>
                 <Grid item xs={12} md={8}>
                     {cart.items.map((item) => (
-                        <Card key={item.id} sx={{ mb: 2, display: 'flex', opacity: loading ? 0.7 : 1 }}>
+                        <Card key={item.id} sx={{ mb: 2, display: 'flex', position: 'relative' }}>
+                            {updatingItems[item.id] && (
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        bgcolor: 'rgba(255, 255, 255, 0.7)',
+                                        zIndex: 1,
+                                    }}
+                                >
+                                    <CircularProgress size={24} />
+                                </Box>
+                            )}
                             <CardMedia
                                 component="img"
                                 sx={{ width: 150, height: 150, objectFit: 'cover' }}
@@ -114,41 +129,20 @@ const Cart = () => {
                                     <Typography variant="body2" color="text.secondary" gutterBottom>
                                         {item.post.caption}
                                     </Typography>
-                                    <Typography variant="h6" color="primary">
-                                        ${Number(item.post.price).toFixed(2)}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Typography variant="h6" color="primary">
+                                            ${Number(item.post.price).toFixed(2)}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Quantity: {item.quantity}
+                                        </Typography>
+                                    </Box>
                                 </CardContent>
                                 <Box sx={{ display: 'flex', alignItems: 'center', pl: 2, pb: 2 }}>
                                     <IconButton
-                                        onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                                        disabled={loading}
-                                    >
-                                        <RemoveIcon />
-                                    </IconButton>
-                                    <TextField
-                                        type="number"
-                                        value={item.quantity}
-                                        onChange={(e) => {
-                                            const value = parseInt(e.target.value);
-                                            if (!isNaN(value)) {
-                                                handleQuantityChange(item.id, value);
-                                            }
-                                        }}
-                                        inputProps={{ min: 1, style: { textAlign: 'center' } }}
-                                        sx={{ width: 60, mx: 1 }}
-                                        disabled={loading}
-                                    />
-                                    <IconButton
-                                        onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                                        disabled={loading}
-                                    >
-                                        <AddIcon />
-                                    </IconButton>
-                                    <IconButton
                                         onClick={() => handleRemoveItem(item.id)}
                                         color="error"
-                                        sx={{ ml: 2 }}
-                                        disabled={loading}
+                                        disabled={updatingItems[item.id]}
                                     >
                                         <DeleteIcon />
                                     </IconButton>

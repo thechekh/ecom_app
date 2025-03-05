@@ -1,14 +1,22 @@
-import { Alert } from '@mui/material';
+import { Alert, AlertProps } from '@mui/material';
 
-interface FormErrorProps {
-    error: string | null;
+interface FormErrorProps extends Omit<AlertProps, 'severity'> {
+    error: string | null | undefined;
+    className?: string;
 }
 
-const FormError = ({ error }: FormErrorProps) => {
+const FormError = ({ error, sx, ...props }: FormErrorProps) => {
     if (!error) return null;
 
     return (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert
+            severity="error"
+            sx={{
+                mb: 2,
+                ...sx
+            }}
+            {...props}
+        >
             {error}
         </Alert>
     );

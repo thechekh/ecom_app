@@ -158,7 +158,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 10,
+    "PAGE_SIZE": 9,
 }
 
 # CORS settings
@@ -190,9 +190,16 @@ AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_ADDRESSING_STYLE = "virtual"
 
 # Storage settings
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+if DEBUG:
+    # Use local storage in debug mode
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+else:
+    # Use S3 in production
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Logging configuration
 LOGGING = {

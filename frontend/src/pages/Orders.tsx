@@ -1,25 +1,43 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
     Container,
     Typography,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Button,
     Box,
+    Paper,
+    Grid,
     CircularProgress,
+    Chip,
 } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchOrders } from '../store/slices/ordersSlice';
-import { Order } from '../types';
+import FormError from '../components/FormError';
+
+const getStatusColor = (status: string) => {
+    switch (status) {
+        case 'pending':
+            return 'warning';
+        case 'processing':
+            return 'info';
+        case 'completed':
+            return 'success';
+        case 'cancelled':
+            return 'error';
+        default:
+            return 'default';
+    }
+};
+
+const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+};
 
 const Orders = () => {
-    const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const { items: orders, loading, error } = useAppSelector(state => state.orders);
 
@@ -36,88 +54,94 @@ const Orders = () => {
     }
 
     if (error) {
-        return (
-            <Typography color="error" align="center" sx={{ mt: 4 }}>
-                {error}
-            </Typography>
-        );
+        return <FormError error={error} />;
     }
 
-    // Handle both array and paginated responses
-    const ordersList: Order[] = Array.isArray(orders) ? orders : (orders as any)?.results || [];
-
-    if (!ordersList || ordersList.length === 0) {
+    if (!orders || !orders.length) {
         return (
             <Container maxWidth="md">
                 <Paper elevation={3} sx={{ p: 3, mt: 4, textAlign: 'center' }}>
                     <Typography variant="h5" gutterBottom>
                         No orders found
                     </Typography>
-                    <Button
-                        variant="contained"
-                        onClick={() => navigate('/')}
-                        sx={{ mt: 2 }}
-                    >
-                        Continue Shopping
-                    </Button>
                 </Paper>
             </Container>
         );
     }
 
     return (
-        <Container maxWidth="lg">
-            <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 4 }}>
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
                 My Orders
             </Typography>
 
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Order ID</TableCell>
-                            <TableCell>Date</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Total</TableCell>
-                            <TableCell>Action</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {ordersList.map((order: Order) => (
-                            <TableRow key={order.id}>
-                                <TableCell>#{order.id}</TableCell>
-                                <TableCell>
-                                    {new Date(order.created_at).toLocaleDateString()}
-                                </TableCell>
-                                <TableCell>
-                                    <Typography
-                                        sx={{
-                                            textTransform: 'capitalize',
-                                            color: order.status === 'completed'
-                                                ? 'success.main'
-                                                : order.status === 'cancelled'
-                                                    ? 'error.main'
-                                                    : 'info.main',
-                                        }}
-                                    >
-                                        {order.status}
+            <Grid container spacing={3}>
+                {orders.map((order) => (
+                    <Grid item xs={12} key={order.id}>
+                        <Paper elevation={3} sx={{ p: 3 }}>
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="h6">
+                                    Order #{order.id}
+                                </Typography>
+                            </Box>
+
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Ordered on: {formatDate(order.created_at)}
                                     </Typography>
-                                </TableCell>
-                                <TableCell>${Number(order.total_amount).toFixed(2)}</TableCell>
-                                <TableCell>
-                                    <Button
-                                        variant="outlined"
-                                        size="small"
-                                        onClick={() => navigate(`/orders/${order.id}`)}
-                                    >
-                                        View Details
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Payment Method: {(order.payment_method || '').replace('_', ' ').toUpperCase()}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                        Shipping Address:
+                                    </Typography>
+                                    <Typography variant="body2">
+                                        {order.shipping_address}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Order Items:
+                                    </Typography>
+                                    {order.items?.map((item) => (
+                                        <Box key={item.id} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                <Box
+                                                    component="img"
+                                                    src={item.post.images[0]?.image}
+                                                    alt={item.post.caption}
+                                                    sx={{
+                                                        width: 50,
+                                                        height: 50,
+                                                        objectFit: 'cover',
+                                                    }}
+                                                />
+                                                <Box>
+                                                    <Typography variant="body2">
+                                                        {item.post.caption}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Quantity: {item.quantity}
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                            <Typography variant="body2">
+                                                ${Number(item.price).toFixed(2)}
+                                            </Typography>
+                                        </Box>
+                                    ))}
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                        <Typography variant="h6">
+                                            Total: ${Number(order.total_amount || 0).toFixed(2)}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        </Paper>
+                    </Grid>
+                ))}
+            </Grid>
         </Container>
     );
 };

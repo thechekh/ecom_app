@@ -3,13 +3,11 @@ from .models import Post, PostImage
 from users.serializers import UserSerializer
 
 class PostImageSerializer(serializers.ModelSerializer):
-    small_url = serializers.CharField(source='small_image_url', read_only=True)
-    medium_url = serializers.CharField(source='medium_image_url', read_only=True)
-    large_url = serializers.CharField(source='large_image_url', read_only=True)
+    processed_url = serializers.CharField(source='processed_image_url', read_only=True)
 
     class Meta:
         model = PostImage
-        fields = ('id', 'image', 'order', 'small_url', 'medium_url', 'large_url')
+        fields = ('id', 'image', 'processed_url')
 
 class PostSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -29,8 +27,8 @@ class PostSerializer(serializers.ModelSerializer):
         uploaded_images = validated_data.pop('uploaded_images', [])
         post = Post.objects.create(**validated_data)
 
-        for order, image in enumerate(uploaded_images):
-            PostImage.objects.create(post=post, image=image, order=order)
+        for image in uploaded_images:
+            PostImage.objects.create(post=post, image=image)
 
         return post
 
@@ -45,7 +43,7 @@ class PostSerializer(serializers.ModelSerializer):
             # Delete existing images
             instance.images.all().delete()
             # Create new images
-            for order, image in enumerate(uploaded_images):
-                PostImage.objects.create(post=instance, image=image, order=order)
+            for image in uploaded_images:
+                PostImage.objects.create(post=instance, image=image)
 
         return instance 

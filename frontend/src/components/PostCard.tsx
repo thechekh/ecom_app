@@ -118,7 +118,7 @@ const PostCard = ({ post }: PostCardProps) => {
                         variant="contained"
                         startIcon={<CartIcon />}
                         onClick={handleAddToCart}
-                        disabled={loading || user?.id === post.user.id}
+                        disabled={loading}
                     >
                         {loading ? 'Adding...' : 'Add to Cart'}
                     </Button>

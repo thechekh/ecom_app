@@ -38,14 +38,6 @@ export const removeFromCart = createAsyncThunk(
     }
 );
 
-export const updateCartItem = createAsyncThunk(
-    'cart/updateCartItem',
-    async ({ itemId, quantity }: { itemId: number; quantity: number }) => {
-        const response = await cartAPI.updateCartItem(itemId, quantity);
-        return response;
-    }
-);
-
 const cartSlice = createSlice({
     name: 'cart',
     initialState,
@@ -94,24 +86,15 @@ const cartSlice = createSlice({
                 state.loading = false;
                 if (state.cart) {
                     state.cart.items = state.cart.items.filter(item => item.id !== action.payload);
+                    state.cart.total_amount = state.cart.items.reduce(
+                        (total, item) => total + (item.quantity * Number(item.post.price)),
+                        0
+                    );
                 }
             })
             .addCase(removeFromCart.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.error.message || 'Failed to remove item from cart';
-            })
-            // Update Cart Item
-            .addCase(updateCartItem.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(updateCartItem.fulfilled, (state, action) => {
-                state.loading = false;
-                state.cart = action.payload;
-            })
-            .addCase(updateCartItem.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.error.message || 'Failed to update cart item';
             });
     },
 });

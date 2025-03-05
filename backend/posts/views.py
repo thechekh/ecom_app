@@ -10,7 +10,7 @@ from .serializers import PostSerializer
 # Create your views here.
 
 class PostPagination(PageNumberPagination):
-    page_size = 10
+    page_size = 9
     page_size_query_param = 'page_size'
     max_page_size = 100
 
@@ -20,13 +20,27 @@ class PostListView(generics.ListAPIView):
     pagination_class = PostPagination
 
     def get_queryset(self):
-        queryset = Post.objects.all().order_by('-created_at')
+        queryset = Post.objects.all()
+        
+        # Handle search
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
                 Q(caption__icontains=search) |
                 Q(user__username__icontains=search)
             )
+        
+        # Handle sorting
+        sort = self.request.query_params.get('sort', '-created_at')
+        if sort == 'created_at':  # Date A-Z
+            queryset = queryset.order_by('created_at')
+        elif sort == '-created_at':  # Date Z-A (default)
+            queryset = queryset.order_by('-created_at')
+        elif sort == 'price':  # Price A-Z
+            queryset = queryset.order_by('price')
+        elif sort == '-price':  # Price Z-A
+            queryset = queryset.order_by('-price')
+        
         return queryset
 
 class PostDetailView(generics.RetrieveAPIView):

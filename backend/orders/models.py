@@ -21,6 +21,7 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     shipping_address = models.TextField()
+    contact_info = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

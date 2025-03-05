@@ -6,6 +6,9 @@ export interface User {
     last_name: string;
     profile_photo?: string;
     bio?: string;
+    phone?: string;
+    delivery_address?: string;
+    preferred_payment_method?: 'bank' | 'stripe' | 'google_pay' | 'apple_pay';
 }
 
 export interface Post {
@@ -46,6 +49,12 @@ export interface Order {
     payment_method: 'bank' | 'stripe' | 'google_pay' | 'apple_pay';
     total_amount: number;
     shipping_address: string;
+    contact_info: {
+        first_name: string;
+        last_name: string;
+        email: string;
+        phone: string;
+    };
     items: OrderItem[];
     created_at: string;
     updated_at: string;

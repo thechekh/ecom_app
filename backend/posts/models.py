@@ -1,12 +1,13 @@
 from django.db import models
 from django.conf import settings
-from core.storage_backends import MediaStorage
+from core.storage_backends import get_post_storage
+from django.utils import timezone
 import os
 
 def post_image_path(instance, filename):
-    # Generate path for original image
+    # Generate path for post image
     ext = filename.split('.')[-1]
-    return f'images_posts/{instance.post.user.id}/{instance.post.id}/post-photo.{ext}'
+    return f'post-{instance.post.id}-{instance.id}.{ext}'
 
 class Post(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posts')
@@ -22,18 +23,24 @@ class Post(models.Model):
         return f'{self.user.username} - {self.created_at}'
 
 class PostImage(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='images')
+    post = models.ForeignKey(Post, related_name='images', on_delete=models.CASCADE)
     image = models.ImageField(
         upload_to=post_image_path,
-        storage=MediaStorage()
+        storage=get_post_storage()
     )
-    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        ordering = ['order']
+        ordering = ['created_at']
 
     def __str__(self):
-        return f'Image {self.order} for post {self.post.id}'
+        return f'Image for post {self.post.id}'
+
+    @property
+    def image_url(self):
+        if not self.image:
+            return None
+        return self.image.url if hasattr(self.image, 'url') else None
 
     @property
     def processed_image_url(self):

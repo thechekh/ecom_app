@@ -22,7 +22,18 @@ import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 
 // Components
-import PrivateRoute from './components/PrivateRoute';
+import { createProtectedRoutes } from './components/PrivateRoute';
+
+// Define protected routes configuration
+const protectedRoutes = [
+  { path: '/profile', element: <Profile /> },
+  { path: '/posts/create', element: <CreatePost /> },
+  { path: '/posts/:id/edit', element: <EditPost /> },
+  { path: '/cart', element: <Cart /> },
+  { path: '/checkout', element: <Checkout /> },
+  { path: '/orders', element: <Orders /> },
+  { path: '/orders/:id', element: <OrderDetail /> },
+];
 
 function App() {
   return (
@@ -39,13 +50,7 @@ function App() {
               <Route path="/posts/:id" element={<PostDetail />} />
 
               {/* Protected Routes */}
-              <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-              <Route path="/posts/create" element={<PrivateRoute><CreatePost /></PrivateRoute>} />
-              <Route path="/posts/:id/edit" element={<PrivateRoute><EditPost /></PrivateRoute>} />
-              <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
-              <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
-              <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
-              <Route path="/orders/:id" element={<PrivateRoute><OrderDetail /></PrivateRoute>} />
+              {createProtectedRoutes(protectedRoutes)}
 
               {/* Catch all */}
               <Route path="*" element={<Navigate to="/" replace />} />

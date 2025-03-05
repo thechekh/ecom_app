@@ -2,11 +2,6 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { ordersAPI } from '../../services/api';
 import { Order } from '../../types';
 
-interface PaginatedResponse {
-    count: number;
-    results: Order[];
-}
-
 interface OrdersState {
     items: Order[];
     selectedOrder: Order | null;
@@ -25,7 +20,7 @@ export const fetchOrders = createAsyncThunk(
     'orders/fetchOrders',
     async () => {
         const response = await ordersAPI.getOrders();
-        return response.data;
+        return response.data.results;
     }
 );
 
@@ -39,7 +34,16 @@ export const fetchOrder = createAsyncThunk(
 
 export const checkout = createAsyncThunk(
     'orders/checkout',
-    async (data: { payment_method: string; shipping_address: string }) => {
+    async (data: {
+        payment_method: string;
+        shipping_address: string;
+        contact_info: {
+            first_name: string;
+            last_name: string;
+            email: string;
+            phone: string;
+        }
+    }) => {
         const response = await ordersAPI.createOrder(data);
         return response.data;
     }
@@ -80,13 +84,31 @@ const ordersSlice = createSlice({
                 state.error = action.error.message || 'Failed to fetch orders';
             })
             // Fetch Single Order
+            .addCase(fetchOrder.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
             .addCase(fetchOrder.fulfilled, (state, action) => {
+                state.loading = false;
                 state.selectedOrder = action.payload;
             })
+            .addCase(fetchOrder.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.error.message || 'Failed to fetch order';
+            })
             // Checkout
+            .addCase(checkout.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
             .addCase(checkout.fulfilled, (state, action) => {
-                state.items.unshift(action.payload);
+                state.loading = false;
                 state.selectedOrder = action.payload;
+                state.items = [action.payload, ...state.items];
+            })
+            .addCase(checkout.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.error.message || 'Failed to create order';
             })
             // Cancel Order
             .addCase(cancelOrder.fulfilled, (state, action) => {

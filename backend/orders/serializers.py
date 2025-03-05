@@ -37,13 +37,18 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ('id', 'user', 'status', 'payment_method', 'total_amount', 'shipping_address',
-                 'items', 'created_at', 'updated_at')
+                 'contact_info', 'items', 'created_at', 'updated_at')
         read_only_fields = ('id', 'user', 'created_at', 'updated_at')
 
 class OrderCreateSerializer(serializers.ModelSerializer):
+    contact_info = serializers.JSONField()
+
     class Meta:
         model = Order
-        fields = ('payment_method', 'shipping_address')
+        fields = ('payment_method', 'shipping_address', 'contact_info')
+
+    def to_representation(self, instance):
+        return OrderSerializer(instance, context=self.context).data
 
     def create(self, validated_data):
         user = self.context['request'].user
@@ -52,6 +57,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         if not cart or not cart.items.exists():
             raise serializers.ValidationError({"cart": "Cart is empty"})
 
+        contact_info = validated_data.pop('contact_info', {})
+        
         # Calculate total amount from cart
         total_amount = sum(item.post.price * item.quantity for item in cart.items.all())
 
@@ -59,6 +66,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         order = Order.objects.create(
             user=user,
             total_amount=total_amount,
+            contact_info=contact_info,
             **validated_data
         )
 
