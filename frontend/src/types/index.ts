@@ -11,6 +11,20 @@ export interface User {
     preferred_payment_method?: 'bank' | 'stripe' | 'google_pay' | 'apple_pay';
 }
 
+export interface PreviewImage {
+    file: File;
+    preview: string;
+}
+
+export interface CheckoutFormValues {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    deliveryAddress: string;
+    paymentMethod: 'bank' | 'stripe' | 'google_pay' | 'apple_pay';
+}
+
 export interface Post {
     id: number;
     user: User;
@@ -73,9 +87,11 @@ export interface LoginCredentials {
     password: string;
 }
 
-export interface RegisterData extends LoginCredentials {
+export interface RegisterData {
+    username: string;
     email: string;
+    password: string;
+    password2: string;
     first_name: string;
     last_name: string;
-    password2: string;
 } 

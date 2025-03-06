@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import React, { memo } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
     AppBar,
@@ -9,23 +9,100 @@ import {
     Button,
     IconButton,
     Badge,
-    Menu,
-    MenuItem,
-    Link,
 } from '@mui/material';
 import {
     ShoppingCart as CartIcon,
-    AccountCircle as AccountIcon,
-    Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useAppSelector, useAppDispatch } from '../hooks/redux';
 import { logout } from '../store/slices/authSlice';
 
 interface LayoutProps {
-    children: ReactNode;
+    children: React.ReactNode;
 }
 
-const Layout = ({ children }: LayoutProps) => {
+const Navigation: React.FC<{
+    user: any,
+    cartItemCount: number,
+    onLogout: () => void
+}> = memo(({ user, cartItemCount, onLogout }) => (
+    <Toolbar>
+        <Typography
+            variant="h6"
+            component={RouterLink}
+            to="/"
+            sx={{
+                flexGrow: 1,
+                textDecoration: 'none',
+                color: 'inherit',
+            }}
+        >
+            E-commerce
+        </Typography>
+
+        {user ? (
+            <>
+                <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/posts/create"
+                >
+                    Create Post
+                </Button>
+                <IconButton
+                    color="inherit"
+                    component={RouterLink}
+                    to="/cart"
+                >
+                    <Badge
+                        badgeContent={cartItemCount}
+                        color="error"
+                    >
+                        <CartIcon />
+                    </Badge>
+                </IconButton>
+                <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/orders"
+                >
+                    Orders
+                </Button>
+                <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/profile"
+                >
+                    Profile
+                </Button>
+                <Button
+                    color="inherit"
+                    onClick={onLogout}
+                >
+                    Logout
+                </Button>
+            </>
+        ) : (
+            <>
+                <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/login"
+                >
+                    Login
+                </Button>
+                <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/register"
+                >
+                    Register
+                </Button>
+            </>
+        )}
+    </Toolbar>
+));
+
+const Layout: React.FC<LayoutProps> = memo(({ children }) => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const { user } = useAppSelector(state => state.auth);
@@ -40,81 +117,11 @@ const Layout = ({ children }: LayoutProps) => {
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <AppBar position="static">
                 <Container maxWidth="lg">
-                    <Toolbar>
-                        <Typography
-                            variant="h6"
-                            component={RouterLink}
-                            to="/"
-                            sx={{
-                                flexGrow: 1,
-                                textDecoration: 'none',
-                                color: 'inherit',
-                            }}
-                        >
-                            E-commerce
-                        </Typography>
-
-                        {user ? (
-                            <>
-                                <Button
-                                    color="inherit"
-                                    component={RouterLink}
-                                    to="/posts/create"
-                                >
-                                    Create Post
-                                </Button>
-                                <IconButton
-                                    color="inherit"
-                                    component={RouterLink}
-                                    to="/cart"
-                                >
-                                    <Badge
-                                        badgeContent={cart?.items?.length || 0}
-                                        color="error"
-                                    >
-                                        <CartIcon />
-                                    </Badge>
-                                </IconButton>
-                                <Button
-                                    color="inherit"
-                                    component={RouterLink}
-                                    to="/orders"
-                                >
-                                    Orders
-                                </Button>
-                                <Button
-                                    color="inherit"
-                                    component={RouterLink}
-                                    to="/profile"
-                                >
-                                    Profile
-                                </Button>
-                                <Button
-                                    color="inherit"
-                                    onClick={handleLogout}
-                                >
-                                    Logout
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <Button
-                                    color="inherit"
-                                    component={RouterLink}
-                                    to="/login"
-                                >
-                                    Login
-                                </Button>
-                                <Button
-                                    color="inherit"
-                                    component={RouterLink}
-                                    to="/register"
-                                >
-                                    Register
-                                </Button>
-                            </>
-                        )}
-                    </Toolbar>
+                    <Navigation
+                        user={user}
+                        cartItemCount={cart?.items?.length || 0}
+                        onLogout={handleLogout}
+                    />
                 </Container>
             </AppBar>
 
@@ -150,6 +157,6 @@ const Layout = ({ children }: LayoutProps) => {
             </Box>
         </Box>
     );
-};
+});
 
 export default Layout; 

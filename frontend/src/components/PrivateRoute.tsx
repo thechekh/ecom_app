@@ -1,12 +1,12 @@
-import { ReactNode } from 'react';
-import { Navigate, useLocation, Route, RouteProps } from 'react-router-dom';
+import React, { memo } from 'react';
+import { Navigate, useLocation, Route } from 'react-router-dom';
 import { useAppSelector } from '../hooks/redux';
 
 interface PrivateRouteProps {
-    children: ReactNode;
+    children: React.ReactNode;
 }
 
-export const PrivateRoute = ({ children }: PrivateRouteProps) => {
+export const PrivateRoute = memo(({ children }: PrivateRouteProps) => {
     const { user } = useAppSelector(state => state.auth);
     const location = useLocation();
 
@@ -15,21 +15,21 @@ export const PrivateRoute = ({ children }: PrivateRouteProps) => {
     }
 
     return <>{children}</>;
-};
+});
 
 interface ProtectedRouteConfig {
     path: string;
     element: JSX.Element;
 }
 
-export const createProtectedRoutes = (routes: ProtectedRouteConfig[]) => {
-    return routes.map(({ path, element }) => (
+export const createProtectedRoutes = (routes: ProtectedRouteConfig[]) => (
+    routes.map(({ path, element }) => (
         <Route
             key={path}
             path={path}
             element={<PrivateRoute>{element}</PrivateRoute>}
         />
-    ));
-};
+    ))
+);
 
 export default PrivateRoute; 
